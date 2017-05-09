@@ -12,6 +12,12 @@ How to use WeMos D1 in arduino IDE, please follow the guide:
 https://www.wemos.cc/tutorial/get-started-arduino.html
 WeMos D1(retired)
 
+## RFID
+We choose the M1 card which is cheap and easy to get.
+The standard is MIFARE Classic 1k, any other MIFARE card is ok even Chinese UID changeable MIFARE cards.
+To read the card, we use MFRC-522 breakout board connected with arduino. The library for arduino to read and write:
+https://github.com/miguelbalboa/rfid
+
 ## Wiring
 
 
