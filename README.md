@@ -20,6 +20,19 @@ https://github.com/miguelbalboa/rfid
 
 ## Wiring
 
+For RFID module
 
+	RST_PIN	0
+	SS_PIN 15
+
+For Door control relay
+
+	relay D2
+	buzzer D3
 
 ## Server
+
+We tried to find a tool for server, the easier the better. [XAMPP](https://www.apachefriends.org/download.html) is a good choice, and [PHPstudy](http://www.phpstudy.net/a.php/211.html) is light and easy for newbie.
+
+You can choose either tool to run database and server. Just add **attandance.php** into "WWW" or "ROOT" folder to make it accessable.
+
