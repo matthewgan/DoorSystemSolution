@@ -34,6 +34,9 @@ Created: 9/27/2016 10:59:24
 #define SS_PIN  15  // SDA-PIN for RC522 - RFID - SPI - Module GPIO-15
 #define DEBUGMODE 0
 
+#define DoorRelay D2
+#define Buzzer D3
+
 const char* ssid = "XinCheJian";  //the wifi network ssid
 const char* password = "imakestuff";  //password to ssid
 const char* host = "192.168.1.100";   //server ip address
@@ -51,10 +54,10 @@ void setup() {
   mfrc522.PCD_Init(); // Init MFRC522 card
 
   //set digital signal pin for the door
-  pinMode(D2, OUTPUT);
+  pinMode(DoorRelay, OUTPUT);
 
   //ver1.7 buzzer
-  pinMode(D3, OUTPUT);
+  pinMode(Buzzer, OUTPUT);
   CloseDoor();
 
   Connect2Wifi();
@@ -255,63 +258,63 @@ void loop() {
 }
 
 void warnForNoAuthCard() {
-        digitalWrite(D3,HIGH);
+        digitalWrite(Buzzer,HIGH);
         delay (100);
-        digitalWrite(D3,LOW);
+        digitalWrite(Buzzer,LOW);
         delay (100);
-        digitalWrite(D3,HIGH);
+        digitalWrite(Buzzer,HIGH);
         delay (100);
-        digitalWrite(D3,LOW);
+        digitalWrite(Buzzer,LOW);
         delay (100);
-        digitalWrite(D3,HIGH);
+        digitalWrite(Buzzer,HIGH);
         delay (100);
-        digitalWrite(D3,LOW);
+        digitalWrite(Buzzer,LOW);
         delay (100);
-        digitalWrite(D3,HIGH);
+        digitalWrite(Buzzer,HIGH);
         delay (300);
-        digitalWrite(D3,LOW);  
+        digitalWrite(Buzzer,LOW);  
 }
 
 void warnForNoWIFI() {
-        digitalWrite(D3,HIGH);
+        digitalWrite(Buzzer,HIGH);
         delay (2000);  
-        digitalWrite(D3,LOW);
+        digitalWrite(Buzzer,LOW);
         delay (1000);
-        digitalWrite(D3,HIGH);
+        digitalWrite(Buzzer,HIGH);
         delay (2000);  
-        digitalWrite(D3,LOW);
+        digitalWrite(Buzzer,LOW);
 }
 
 void warnForNoServer() {
-        digitalWrite(D3,HIGH);
+        digitalWrite(Buzzer,HIGH);
         delay (1000); 
-        digitalWrite(D3,LOW);
+        digitalWrite(Buzzer,LOW);
         delay (200);  
-        digitalWrite(D3,HIGH);
+        digitalWrite(Buzzer,HIGH);
         delay (200);
-        digitalWrite(D3,LOW);
+        digitalWrite(Buzzer,LOW);
         delay (1000); 
-        digitalWrite(D3,HIGH);
+        digitalWrite(Buzzer,HIGH);
         delay (1000); 
-        digitalWrite(D3,LOW);
+        digitalWrite(Buzzer,LOW);
         delay (200);  
-        digitalWrite(D3,HIGH);
+        digitalWrite(Buzzer,HIGH);
         delay (200); 
-        digitalWrite(D3,LOW);       
+        digitalWrite(Buzzer,LOW);       
 }
 
 void OpenDoor()
 {
-  digitalWrite(D3,HIGH);  
-  digitalWrite(D2, LOW);
+  digitalWrite(Buzzer,HIGH);  
+  digitalWrite(DoorRelay, LOW);
   delay (350);
-  digitalWrite(D3,LOW);
+  digitalWrite(Buzzer,LOW);
   
 }
 
 void CloseDoor()
 {
-  digitalWrite(D2, HIGH);
+  digitalWrite(DoorRelay, HIGH);
 }
 
 void Connect2Wifi()
