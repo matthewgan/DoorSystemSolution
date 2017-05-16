@@ -58,3 +58,29 @@ We tried to find a tool for server, the easier the better. [XAMPP](https://www.a
 
 You can choose either tool to run database and server. Just add **attandance.php** into "WWW" or "ROOT" folder to make it accessable.
 
+In arduino, we use a GET method to send staff_name and staff_id information (which already pre coded in the RFID card) to the server;
+So arduino must know the server ip and port information, and it means these information best keep unchanged.
+
+In the server side, a simply database can be built with SQL scripts like the following example:
+
+<pre><code>CREATE SCHEMA `xinchejian` DEFAULT CHARACTER SET utf8 ;
+
+ CREATE TABLE `xinchejian`.`staff_authorization` (
+   `staff_id` varchar(16) NOT NULL,
+   `NoEntry` INT NOT NULL,
+   PRIMARY KEY (`staff_id`),
+   UNIQUE INDEX `staff_id_UNIQUE` (`staff_id` ASC));
+
+
+ CREATE TABLE `xinchejian`.`staff_attendance` (
+   `Id` INT NOT NULL AUTO_INCREMENT,
+   `staff_db_id` varchar(16) NOT NULL,
+   `staff_db_name` varchar(16) NOT NULL,
+   `staff_db_time` Date NOT NULL,
+   PRIMARY KEY (`Id`),
+   UNIQUE INDEX `Id_UNIQUE` (`Id` ASC));
+</pre></code>
+
+You can modify it on your own demand.
+
+In my attendance.php, i just verify the staff_id to make sure it is contained in database, you can certainly do more security process.
