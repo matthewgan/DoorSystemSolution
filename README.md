@@ -46,7 +46,7 @@ Connection between WEMOS D1 and RC522 breakout board.
  * +------+----------+--------------+-------+-------+
  * | D2   | IO       | GPIO-16      |       | IN1   |
  * +------+----------+--------------+-------+-------+
- */
+ */</pre></code>
 For Door control relay
 
 	relay D2
