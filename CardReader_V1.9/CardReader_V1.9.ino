@@ -1,53 +1,56 @@
-/*
-Name:    NFC_ReadCard.ino
-Created: 9/27/2016 10:59:24
- 
-********Version 1.5*********
--更改openDoor()命令位置
-增加线上数据库二次验证, 刷卡模式由先开门再上传刷卡数据改为先上传验证数据再开门
-对网络要求提高,安全性增加,不过同时可能造成部分时间段网络不稳定无法刷卡开门
-
-********Version 1.6*********
--调整openDoor()命令位置
-考虑到用户体验的流畅度, 将在成功读卡后首先判断网络状态,如无法连接网络,先进行开门操作。同时可以防止网络故障后无法开门的情况
-
-
-********Version 1.7*********
--增加刷卡提示音
-
-
-********Version 1.8*********
--增加网络故障提示音
-
-
-********Version 1.9*********
--增加一张超级权限卡用户网络故障后开门
--增加服务器故障提示音
-*/
-
 #include <ESP8266WiFi.h>
 #include <SPI.h>
 #include <MFRC522.h>
 
-
+/*
+ * PINOUT
+ * +--------------------------------+---------------+
+ * | WEMOS D1 ESP8266 BOARD         | CONECT TO PIN |
+ * +--------------------------------+---------------+
+ * | PIN  | FUCTION  | ESP-8266 PIN | RC522 | RELAY |
+ * +------+----------+--------------+-------+-------+
+ * | 3.3V | POWER    | 3.3V         | 3.3V  |       |
+ * +------+----------+--------------+-------+-------+
+ * | 5V   | POWER    | 5V           |       | VCC   |
+ * +------+----------+--------------+-------+-------+
+ * | GND  | GND      | GND          | GND   | GND   |
+ * +------+----------+--------------+-------+-------+
+ * | D13  | SCK      | GPIO-14      | SCK   |       |
+ * +------+----------+--------------+-------+       +
+ * | D12  | MISO     | GPIO-12      | MISO  |       |
+ * +------+----------+--------------+-------+       +
+ * | D11  | MOSI     | GPIO-13      | MOSI  |       |
+ * +------+----------+--------------+-------+       +
+ * | D10  | SS (SDA) | GPIO-15      | SDA   |       |
+ * +------+----------+--------------+-------+       +
+ * | D8   | IO       | GPIO-0       | RESET |       |
+ * +------+----------+--------------+-------+-------+
+ * | D2   | IO       | GPIO-16      |       | IN1   |
+ * +------+----------+--------------+-------+-------+
+ */
+ 
 #define RST_PIN 0 // RST-PIN for RC522 - RFID - SPI - Module GPIO-0 
 #define SS_PIN  15  // SDA-PIN for RC522 - RFID - SPI - Module GPIO-15
-#define DEBUGMODE 0
+#define DEBUGMODE 1
 
 #define DoorRelay D2
 #define Buzzer D3
 
 const char* ssid = "XinCheJian";  //the wifi network ssid
 const char* password = "imakestuff";  //password to ssid
-const char* host = "192.168.1.100";   //server ip address
+const char* host = "10.0.10.201";   //server ip address
 const int httpPort = 80;  //server access address
+const String serverPHPUrl = "/attendance.php";
+
 int cardState = 0;
 
+//the key value is ascii code of string "XCJSHA"(Xinchejian Shanghai)
+const byte KeyVal[6] = {0x58,0x43,0x4A,0x53,0x48,0x41};
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance
 
-void setup() {
-
+void setup() 
+{
   Serial.begin(9600); // Initialize serial communications with the PC
   while (!Serial);    // Do nothing if no serial port is opened (added for Arduinos based on ATMEGA32U4)
   SPI.begin();        // Init SPI bus
@@ -63,25 +66,19 @@ void setup() {
   Connect2Wifi();
 }
 
-void loop() {
+void loop() 
+{
   CloseDoor();
 
-  //prepare the key "xinfab" to the card
-  MFRC522::MIFARE_Key newKey;
-  newKey.keyByte[0] = 0x78;
-  newKey.keyByte[1] = 0x69;
-  newKey.keyByte[2] = 0x6e;
-  newKey.keyByte[3] = 0x66;
-  newKey.keyByte[4] = 0x61;
-  newKey.keyByte[5] = 0x62;
-
   // Look for new cards
-  if (!mfrc522.PICC_IsNewCardPresent()) {
+  if (!mfrc522.PICC_IsNewCardPresent()) 
+  {
     delay(50);
     return;
   }
   // Select one of the cards
-  if (!mfrc522.PICC_ReadCardSerial()) {
+  if (!mfrc522.PICC_ReadCardSerial()) 
+  {
     delay(50);
     return;
   }
@@ -99,19 +96,23 @@ void loop() {
   byte idBlock = 5;
   byte staff_name[18];  //16byte + 2byte CRC
   byte staff_id[18];
-  String super_staff_id_1 = "";
-  String super_staff_id_2 = "";
-  String super_staff_id_3 = "";
   byte size = sizeof(staff_name);
+  MFRC522::MIFARE_Key newKey;
+  for(int i=0;i<6;i++)
+  {
+      newKey.keyByte[i] = KeyVal[i];
+  }
   status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, blockAddr, &newKey, &(mfrc522.uid));
-  if (status != MFRC522::STATUS_OK) {
-    if (DEBUGMODE) Serial.print(F("PCD_Authenticate() use default key failed"));
+  if (status != MFRC522::STATUS_OK) 
+  {
+    if (DEBUGMODE) Serial.print(F("PCD_Authenticate() failed"));
     if (DEBUGMODE) Serial.println(mfrc522.GetStatusCodeName(status));
     mfrc522.PICC_HaltA(); // Halt PICC
     mfrc522.PCD_StopCrypto1();  // Stop encryption on PCD
     return;
   }
-  else {
+  else 
+  {
     cardState = 1;
     if (DEBUGMODE) Serial.println(F("PCD_Authenticate() success: "));
   }
@@ -126,7 +127,8 @@ void loop() {
   //if (DEBUGMODE) Serial.print(nameBlock);
   //if (DEBUGMODE) Serial.println(F(" ..."));
   status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(nameBlock, staff_name, &size);
-  if (status != MFRC522::STATUS_OK) {
+  if (status != MFRC522::STATUS_OK) 
+  {
     if (DEBUGMODE) Serial.print(F("MIFARE_Read() failed: "));
     if (DEBUGMODE) Serial.println(mfrc522.GetStatusCodeName(status));
     //cannot read name, don't open the door 
@@ -140,7 +142,8 @@ void loop() {
   //if (DEBUGMODE) Serial.print(idBlock);
   //if (DEBUGMODE) Serial.println(F(" ..."));
   status = (MFRC522::StatusCode) mfrc522.MIFARE_Read(idBlock, staff_id, &size);
-  if (status != MFRC522::STATUS_OK) {
+  if (status != MFRC522::STATUS_OK) 
+  {
     if (DEBUGMODE) Serial.print(F("MIFARE_Read() failed: "));
     if (DEBUGMODE) Serial.println(mfrc522.GetStatusCodeName(status));
     //cannot read id, don't open the door 
@@ -153,20 +156,27 @@ void loop() {
   mfrc522.PICC_HaltA(); // Halt PICC
   mfrc522.PCD_StopCrypto1();  // Stop encryption on PCD
   
-  if (cardState == 1) {    
+  if (cardState == 1) 
+  {    
     //if wifi is dead, reconnect to the wifi
-    if (WiFi.status() != WL_CONNECTED) {
+    if (WiFi.status() != WL_CONNECTED) 
+    {
       //need to change to multiWifi next version
       Connect2Wifi();
     }
 
-    if (WiFi.status() != WL_CONNECTED) {
+    if (WiFi.status() != WL_CONNECTED) 
+    {
       //ver 1.9 super card mode
       String card_id = "";
       for (int i=0;i<7;i++){
         card_id.concat((char)staff_id[i]);     
       }
-      if(card_id == super_staff_id_auron || card_id == super_staff_id_alex ||card_id == super_staff_id_roxas){
+      String masterCardID01 = "000001";
+      String masterCardID02 = "000002";
+      String masterCardID03 = "000003";
+      if(card_id == masterCardID01 || card_id == masterCardID02 ||card_id == masterCardID03)
+      {
         OpenDoor();
         if (DEBUGMODE) Serial.println("Super Card Authrization Mode");
         if (DEBUGMODE) Serial.println("Door Open");
@@ -179,21 +189,29 @@ void loop() {
     if (DEBUGMODE) Serial.println(host);
     WiFiClient client;
     
-    if (!client.connect(host, httpPort)) {
+    if (!client.connect(host, httpPort)) 
+    {
       if (DEBUGMODE) Serial.println("connection failed");
       //ver 1.9 super card mode
       String card_id = "";
-      for (int i=0;i<7;i++){
+      for (int i=0;i<7;i++)
+      {
         card_id.concat((char)staff_id[i]);     
       }
-      if(card_id == super_staff_id_auron || card_id == super_staff_id_alex ||card_id == super_staff_id_roxas){
+      card_id.concat("");
+      Serial.println(card_id);    
+      String masterCardID01 = "000001";
+      String masterCardID02 = "000002";
+      String masterCardID03 = "000003";
+      if(card_id == masterCardID01 || card_id == masterCardID02 ||card_id == masterCardID03)
+      {
         OpenDoor();
         if (DEBUGMODE) Serial.println("Super Card Authrization Mode");
         if (DEBUGMODE) Serial.println("Door Open");
       }
- 
+      Serial.println(masterCardID01);
       warnForNoServer();
-       return;
+      return;
     }
 
     int i = 0;
@@ -210,7 +228,7 @@ void loop() {
     //0x0d is a mistake input when write the cards
 
     //create a URI for the request
-    String url2 = "/AICP_YARD/attendance.php?staff_name=" + send_content;
+    String url2 = serverPHPUrl + "?staff_name=" + send_content;
 
     if (DEBUGMODE) Serial.print("Requesting URL: ");
     if (DEBUGMODE) Serial.println(url2);
@@ -222,27 +240,33 @@ void loop() {
 
     //wait for response and set time out
     unsigned long timeout = millis();
-    while (client.available() == 0) {
-      if (millis() - timeout > 3000) {
+    while (client.available() == 0) 
+    {
+      if (millis() - timeout > 3000) 
+      {
         Serial.println(">>> Client Timeout !");
         client.stop();
         return;
       }
     }
 
-    while (client.available()) {
+    while (client.available()) 
+    {
       String line = client.readStringUntil('\n');
       if (DEBUGMODE) Serial.println(line);
-      if (line == "\r") {
+      if (line == "\r") 
+      {
         if (DEBUGMODE) Serial.println("headers received");
       }
-      if (line.startsWith("state:success")) {
+      if (line.startsWith("state:success")) 
+      {
         //if (DEBUGMODE) Serial.println(line);
         if (DEBUGMODE) Serial.println("Receive response successfull!");
             OpenDoor();
         break;
       }
-      if (line.startsWith("state:fail")) {   
+      if (line.startsWith("state:fail")) 
+      {   
         warnForNoAuthCard();
         break;
       }
@@ -257,7 +281,11 @@ void loop() {
    
 }
 
-void warnForNoAuthCard() {
+// buzzer notification
+
+//di-di-di-di~
+void warnForNoAuthCard() 
+{
         digitalWrite(Buzzer,HIGH);
         delay (100);
         digitalWrite(Buzzer,LOW);
@@ -275,7 +303,9 @@ void warnForNoAuthCard() {
         digitalWrite(Buzzer,LOW);  
 }
 
-void warnForNoWIFI() {
+//di~--di~
+void warnForNoWIFI() 
+{
         digitalWrite(Buzzer,HIGH);
         delay (2000);  
         digitalWrite(Buzzer,LOW);
@@ -285,7 +315,9 @@ void warnForNoWIFI() {
         digitalWrite(Buzzer,LOW);
 }
 
-void warnForNoServer() {
+//di~-di--di~-di
+void warnForNoServer() 
+{
         digitalWrite(Buzzer,HIGH);
         delay (1000); 
         digitalWrite(Buzzer,LOW);
@@ -324,19 +356,22 @@ void Connect2Wifi()
   WiFi.begin(ssid, password);
 
   int timeLimit = 0;
-  while (WiFi.status() != WL_CONNECTED && timeLimit < 6000) {
+  while (WiFi.status() != WL_CONNECTED && timeLimit < 6000) 
+  {
     delay(500);
     timeLimit += 500;
     if (DEBUGMODE) Serial.print(".");
   }
 
-  if (WiFi.status() == WL_CONNECTED){
+  if (WiFi.status() == WL_CONNECTED)
+  {
    if (DEBUGMODE) Serial.println("WiFi connected");
    if (DEBUGMODE) Serial.println("IP address: ");
    if (DEBUGMODE) Serial.println(WiFi.localIP());
   }
 
-  if (WiFi.status() != WL_CONNECTED){
+  if (WiFi.status() != WL_CONNECTED)
+  {
     Serial.println("Wifi connection failed.");
     warnForNoWIFI();
   }
