@@ -1,0 +1,10 @@
+E:\Arduino门禁\XCJDoor\WindowsFormsApp1\obj\Debug\XCJDoorSystem.mainForm.resources
+E:\Arduino门禁\XCJDoor\WindowsFormsApp1\obj\Debug\WindowsFormsApp1.Properties.Resources.resources
+E:\Arduino门禁\XCJDoor\WindowsFormsApp1\obj\Debug\XCJDoorSystem.csproj.GenerateResource.Cache
+E:\Arduino门禁\XCJDoor\WindowsFormsApp1\obj\Debug\WindowsFormsApp1.exe
+E:\Arduino门禁\XCJDoor\WindowsFormsApp1\obj\Debug\WindowsFormsApp1.pdb
+E:\Arduino门禁\XCJDoor\WindowsFormsApp1\bin\Debug\WindowsFormsApp1.exe.config
+E:\Arduino门禁\XCJDoor\WindowsFormsApp1\bin\Debug\WindowsFormsApp1.exe
+E:\Arduino门禁\XCJDoor\WindowsFormsApp1\bin\Debug\WindowsFormsApp1.pdb
+E:\Arduino门禁\XCJDoor\WindowsFormsApp1\obj\Debug\XCJDoorSystem.csprojResolveAssemblyReference.cache
+E:\Arduino门禁\XCJDoor\WindowsFormsApp1\bin\Debug\MySql.Data.dll
